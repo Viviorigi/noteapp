@@ -262,12 +262,12 @@ class _NotesListScreenState extends State<NotesListScreen> {
               onPressed: () async {
                 final result = await Navigator.pushNamed(
                   context,
-                  '/noteDetail',
+                  '/noteForm',
                   arguments: note,
                 );
                 if (result == true) _fetchNotes();
               },
-              icon: Icon(Icons.visibility,
+              icon: Icon(Icons.edit,
                   size: 20, color: isDark ? Colors.white : Colors.black),
             ),
             IconButton(
