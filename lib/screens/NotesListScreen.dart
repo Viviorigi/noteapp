@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:prjnote/commons/UserProvider.dart';
 import 'package:prjnote/model/note.dart';
+import 'package:prjnote/services/AuthService.dart';
 import 'package:prjnote/services/noteService.dart';
 import 'package:provider/provider.dart';
 import '../commons/theme_provider.dart';
@@ -168,7 +169,48 @@ class _NotesListScreenState extends State<NotesListScreen> {
                     ],
                   ),
                 ),
+                const Divider(),
+
+                ListTile(
+                  leading: const Icon(Icons.logout),
+                  title: const Text("Đăng xuất"),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Xác nhận'),
+                        content: const Text('Bạn có chắc chắn muốn đăng xuất?'),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context), // Huỷ
+                            child: const Text('Huỷ'),
+                          ),
+                          ElevatedButton(
+                            onPressed: () async {
+                              Navigator.pop(context); // đóng dialog
+                              await AuthService.logout();
+                              if (context.mounted) {
+                                Provider.of<UserProvider>(context, listen: false).clearUser();
+                                Navigator.pushNamedAndRemoveUntil(
+                                  context,
+                                  '/login',
+                                      (route) => false,
+                                );
+                              }
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.red,
+                            ),
+                            child: const Text('Đăng xuất'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+
               ],
+
             );
           },
         ),

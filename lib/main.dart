@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:prjnote/commons/UserProvider.dart';
 import 'package:prjnote/model/note.dart';
 import 'package:prjnote/screens/DetailProfileScreen.dart';
+import 'package:prjnote/screens/LoginScreen.dart';
 import 'package:prjnote/screens/NotesFormScreen.dart';
 import 'package:prjnote/screens/NotesListScreen.dart';
 import 'package:prjnote/screens/NotesDetailScreen.dart';
@@ -51,6 +52,7 @@ class MyApp extends StatelessWidget {
               }: null,
             );
           },
+          '/login': (_) => const LoginScreen(),
           '/register': (context) => const RegisterScreen(),
           '/notes': (context) => const NotesListScreen(),
           // '/updateProfile': (context) => const UpdateProfile(),
