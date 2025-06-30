@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:prjnote/commons/UserProvider.dart';
 import 'package:prjnote/model/note.dart';
+import 'package:prjnote/screens/DetailProfileScreen.dart';
 import 'package:prjnote/screens/NotesFormScreen.dart';
 import 'package:prjnote/screens/NotesListScreen.dart';
 import 'package:prjnote/screens/NotesDetailScreen.dart';
+import 'package:prjnote/screens/RegisterScreen.dart';
+import 'package:prjnote/screens/SplashScreen.dart';
 import 'package:provider/provider.dart';
 import 'commons/theme_provider.dart';
 void main() {
-  runApp(ChangeNotifierProvider(
-    create: (_) => ThemeProvider(),
+  runApp(MultiProvider(
+    providers: [
+      ChangeNotifierProvider(create: (_) => ThemeProvider()),
+      ChangeNotifierProvider(create: (_) => UserProvider()),
+    ],
     child: const MyApp(),
-  ),);
+  ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -24,7 +32,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData.light(useMaterial3: true),
       darkTheme: ThemeData.dark(useMaterial3: true),
       themeMode: themeProvider.themeMode,
-      home: NotesListScreen(),
+      home: SplashScreen(),
       debugShowCheckedModeBanner: false,
         routes: {
           '/noteDetail': (context) {
@@ -40,10 +48,13 @@ class MyApp extends StatelessWidget {
                 'title': note.title,
                 'content': note.content,
                 'color': note.color,
-              }
-                  : null,
+              }: null,
             );
           },
+          '/register': (context) => const RegisterScreen(),
+          '/notes': (context) => const NotesListScreen(),
+          // '/updateProfile': (context) => const UpdateProfile(),
+          '/detailProfile':(context)=>const DetailProfileScreen()
         }
     );
   }

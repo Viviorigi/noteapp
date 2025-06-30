@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:prjnote/commons/UserProvider.dart';
 import 'package:prjnote/model/note.dart';
 import 'package:prjnote/services/noteService.dart';
 import 'package:provider/provider.dart';
@@ -57,10 +58,11 @@ class _NotesListScreenState extends State<NotesListScreen> {
               Navigator.pop(context);
               try {
                 await NoteService().deleteNote(noteId);
+                _fetchNotes();
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Xoá ghi chú thành công')),
                 );
-                _fetchNotes();
+
               } catch (e) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Xoá thất bại')),
@@ -87,32 +89,91 @@ class _NotesListScreenState extends State<NotesListScreen> {
     return Scaffold(
       key: _scaffoldKey,
       drawer: Drawer(
-        child: ListView(
-          children: [
-            const DrawerHeader(
-              child: Text("📒 Notes Menu", style: TextStyle(fontSize: 20)),
-            ),
-            ListTile(
-              leading: const Icon(Icons.brightness_6),
-              title: const Text("Theme"),
-              trailing: DropdownButton<ThemeMode>(
-                value: Provider.of<ThemeProvider>(context).themeMode,
-                onChanged: (ThemeMode? mode) {
-                  if (mode != null) {
-                    Provider.of<ThemeProvider>(context, listen: false)
-                        .setTheme(mode);
-                  }
-                },
-                items: const [
-                  DropdownMenuItem(value: ThemeMode.light, child: Text("Light")),
-                  DropdownMenuItem(value: ThemeMode.dark, child: Text("Dark")),
-                  DropdownMenuItem(value: ThemeMode.system, child: Text("System")),
-                ],
-              ),
-            ),
-          ],
+        child: Consumer<UserProvider>(
+          builder: (context, userProvider, child) {
+            final user = userProvider.user;
+
+            return ListView(
+              padding: EdgeInsets.zero,
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, '/detailProfile');
+                  },
+                  child: UserAccountsDrawerHeader(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                    ),
+                    accountName: Text(
+                      user?.fullName ?? 'Chưa có tên',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    accountEmail: Text(
+                      user?.email ?? 'Chưa có email',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                    currentAccountPicture: user?.avatar != null &&
+                        user!.avatar!.isNotEmpty
+                        ? CircleAvatar(
+                      backgroundImage: NetworkImage(user.avatar!),
+                    )
+                        : CircleAvatar(
+                      backgroundColor: const Color(0xFF80D8FF),
+                      child: Text(
+                        (user?.fullName.isNotEmpty == true
+                            ? user!.fullName[0].toUpperCase()
+                            : '?'),
+                        style:
+                        const TextStyle(fontSize: 24, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.person),
+                  title: const Text("Cập nhật thông tin"),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/updateProfile');
+                  },
+                ),
+                ListTile(
+                  leading: const Icon(Icons.lock),
+                  title: const Text("Đổi mật khẩu"),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/changePassword');
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(Icons.brightness_6),
+                  title: const Text("Theme"),
+                  trailing: DropdownButton<ThemeMode>(
+                    value: Provider.of<ThemeProvider>(context).themeMode,
+                    onChanged: (ThemeMode? mode) {
+                      if (mode != null) {
+                        Provider.of<ThemeProvider>(context, listen: false)
+                            .setTheme(mode);
+                      }
+                    },
+                    items: const [
+                      DropdownMenuItem(
+                          value: ThemeMode.light, child: Text("Light")),
+                      DropdownMenuItem(value: ThemeMode.dark, child: Text("Dark")),
+                      DropdownMenuItem(
+                          value: ThemeMode.system, child: Text("System")),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
+
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
