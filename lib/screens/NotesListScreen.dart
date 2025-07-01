@@ -21,11 +21,19 @@ class _NotesListScreenState extends State<NotesListScreen> {
   bool _isSearching = false;
   String _searchQuery = '';
   List<Note> notes = [];
+  late TextEditingController _searchController;
 
   @override
   void initState() {
     super.initState();
+    _searchController = TextEditingController();
     _fetchNotes();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchNotes() async {
@@ -253,8 +261,8 @@ class _NotesListScreenState extends State<NotesListScreen> {
         ),
         title: _isSearching
             ? TextField(
+          controller: _searchController,
           autofocus: true,
-          enableIMEPersonalizedLearning: true,
           onChanged: (value) {
             setState(() {
               _searchQuery = value;
@@ -264,9 +272,9 @@ class _NotesListScreenState extends State<NotesListScreen> {
             hintText: 'Tìm ghi chú...',
             border: InputBorder.none,
           ),
-          style:
-          TextStyle(color: isDark ? Colors.white : Colors.black),
+          style: TextStyle(color: isDark ? Colors.white : Colors.black),
         )
+
             : Text(
           'Notes',
           style: TextStyle(
@@ -292,6 +300,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
             onPressed: () {
               setState(() {
                 _searchQuery = '';
+                _searchController.clear();
               });
             },
           ),

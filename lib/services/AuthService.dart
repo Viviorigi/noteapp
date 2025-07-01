@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:prjnote/model/RegisterRequest.dart';
-import 'package:prjnote/model/usermodel.dart';
+import 'package:prjnote/model/changePasswordRequest.dart';
+import 'package:prjnote/model/registerRequest.dart';
+import 'package:prjnote/model/userModel.dart';
 import '../commons/common.dart'; // import Common class
 
 class AuthService {
@@ -70,5 +72,61 @@ class AuthService {
 
   static Future<void> logout() async {
     await _storage.delete(key: 'jwt_token');
+  }
+
+  static Future<UserModel?> updateProfile({
+    required String fullName,
+    required String phoneNumber,
+    File? avatarFile,
+  }) async {
+    final token = await _storage.read(key: 'jwt_token');
+    if (token == null) return null;
+
+    var uri = Uri.parse('${Common.domain}/api/auth/update');
+    var request = http.MultipartRequest('PUT', uri);
+
+    // Thêm headers
+    request.headers['Authorization'] = 'Bearer $token';
+
+    // Thêm fields
+    request.fields['fullName'] = fullName;
+    request.fields['phoneNumber'] = phoneNumber;
+
+    // Thêm file nếu có
+    if (avatarFile != null) {
+      final avatar = await http.MultipartFile.fromPath(
+        'avatar',
+        avatarFile.path,
+      );
+      request.files.add(avatar);
+    }
+
+    // Gửi request
+    final streamedResponse = await request.send();
+    final response = await http.Response.fromStream(streamedResponse);
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body);
+      return UserModel.fromJson(json);
+    } else {
+      print("Update thất bại: ${response.body}");
+      return null;
+    }
+  }
+
+  static Future<bool> changePassword(ChangePasswordRequest request) async {
+    final token = await _storage.read(key: 'jwt_token');
+    if (token == null) return false;
+
+    final response = await http.put(
+      Uri.parse('${Common.domain}/api/auth/change-password'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(request.toJson()),
+    );
+
+    return response.statusCode == 200;
   }
 }
