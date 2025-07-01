@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:prjnote/model/RegisterRequest.dart';
+import 'package:prjnote/services/AuthService.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -15,23 +17,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneController = TextEditingController();
   bool _obscure = true;
 
-  void _handleRegister() {
-    if (_formKey.currentState!.validate()) {
-      final email = _emailController.text;
-      final password = _passwordController.text;
-      final fullName = _fullNameController.text;
-      final phone = _phoneController.text;
+  void _handleRegister() async {
+    if (!_formKey.currentState!.validate()) return;
 
-      // TODO: Gọi API đăng ký ở đây
+    final request = RegisterRequest(
+      email: _emailController.text.trim(),
+      password: _passwordController.text,
+      fullName: _fullNameController.text.trim(),
+      phoneNumber: _phoneController.text.trim(),
+    );
 
+    final success = await AuthService.register(request);
+
+    if (!mounted) return;
+
+    if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Đăng ký thành công: $email')),
+        const SnackBar(content: Text('Đăng ký thành công!')),
       );
-
-      // Có thể chuyển về login sau khi đăng ký:
-      // Navigator.pop(context);
+      Navigator.pop(context); // Quay lại trang đăng nhập
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Đăng ký thất bại. Vui lòng thử lại!')),
+      );
     }
   }
+
+
 
   @override
   Widget build(BuildContext context) {

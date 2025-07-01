@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:prjnote/commons/UserProvider.dart';
+import 'package:prjnote/commons/common.dart';
 import 'package:provider/provider.dart';
 
 class DetailProfileScreen extends StatelessWidget {
@@ -35,7 +36,7 @@ class DetailProfileScreen extends StatelessWidget {
               radius: 80,
               backgroundColor: const Color(0xFF80D8FF),
               backgroundImage: (user.avatar != null && user.avatar!.isNotEmpty)
-                  ? NetworkImage(user.avatar!)
+                  ? NetworkImage('${Common.domain}${user.avatar!}')
                   : null,
               child: (user.avatar == null || user.avatar!.isEmpty)
                   ? Text(

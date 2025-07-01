@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:prjnote/commons/UserProvider.dart';
+import 'package:prjnote/commons/common.dart';
 import 'package:prjnote/model/note.dart';
 import 'package:prjnote/services/AuthService.dart';
 import 'package:prjnote/services/noteService.dart';
@@ -101,36 +102,51 @@ class _NotesListScreenState extends State<NotesListScreen> {
                   onTap: () {
                     Navigator.pushNamed(context, '/detailProfile');
                   },
-                  child: UserAccountsDrawerHeader(
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
-                    ),
-                    accountName: Text(
-                      user?.fullName ?? 'Chưa có tên',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    accountEmail: Text(
-                      user?.email ?? 'Chưa có email',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    currentAccountPicture: user?.avatar != null &&
-                        user!.avatar!.isNotEmpty
-                        ? CircleAvatar(
-                      backgroundImage: NetworkImage(user.avatar!),
-                    )
-                        : CircleAvatar(
-                      backgroundColor: const Color(0xFF80D8FF),
-                      child: Text(
-                        (user?.fullName.isNotEmpty == true
-                            ? user!.fullName[0].toUpperCase()
-                            : '?'),
-                        style:
-                        const TextStyle(fontSize: 24, color: Colors.white),
-                      ),
+                  child: Container(
+                    padding: const EdgeInsets.fromLTRB(16, 40, 16, 16),
+                    color: Theme.of(context).colorScheme.surface,
+                    child: Row(
+                      children: [
+                        user?.avatar != null && user!.avatar!.isNotEmpty
+                            ? CircleAvatar(
+                          radius: 40, // to hơn rõ rệt
+                          backgroundImage: NetworkImage('${Common.domain}${user.avatar!}'),
+                        )
+                            : CircleAvatar(
+                          radius: 40,
+                          backgroundColor: const Color(0xFF80D8FF),
+                          child: Text(
+                            (user?.fullName.isNotEmpty == true
+                                ? user!.fullName[0].toUpperCase()
+                                : '?'),
+                            style: const TextStyle(fontSize: 28, color: Colors.white),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                user?.fullName ?? 'Chưa có tên',
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                user?.email ?? 'Chưa có email',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
