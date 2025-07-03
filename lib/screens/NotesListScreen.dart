@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:prjnote/commons/SortOption.dart';
 import 'package:prjnote/commons/UserProvider.dart';
 import 'package:prjnote/commons/common.dart';
 import 'package:prjnote/model/note.dart';
@@ -22,6 +23,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
   String _searchQuery = '';
   List<Note> notes = [];
   late TextEditingController _searchController;
+  SortOption _sortOption = SortOption.dateNewest;
 
   @override
   void initState() {
@@ -42,6 +44,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
       final fetchedNotes = await noteService.getAllNotes();
       setState(() {
         notes = fetchedNotes;
+        _applySorting();
         isLoading = false;
       });
     } catch (e) {
@@ -50,6 +53,30 @@ class _NotesListScreenState extends State<NotesListScreen> {
         isLoading = false;
       });
     }
+  }
+
+  void _applySorting() {
+    final pinnedNotes = notes.where((note) => note.pinned).toList();
+    final unpinnedNotes = notes.where((note) => !note.pinned).toList();
+
+    int compare(Note a, Note b) {
+      switch (_sortOption) {
+        case SortOption.titleAsc:
+          return a.title.toLowerCase().compareTo(b.title.toLowerCase());
+        case SortOption.titleDesc:
+          return b.title.toLowerCase().compareTo(a.title.toLowerCase());
+        case SortOption.dateNewest:
+          return b.createdAt.compareTo(a.createdAt); // newest first
+        case SortOption.dateOldest:
+          return a.createdAt.compareTo(b.createdAt);
+      }
+    }
+    pinnedNotes.sort(compare);
+    unpinnedNotes.sort(compare);
+
+    setState(() {
+      notes = [...pinnedNotes, ...unpinnedNotes];
+    });
   }
 
   void _confirmDelete(BuildContext context, int noteId) {
@@ -72,16 +99,15 @@ class _NotesListScreenState extends State<NotesListScreen> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Xoá ghi chú thành công')),
                 );
-
               } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Xoá thất bại')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('Xoá thất bại')));
               }
             },
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Xoá'),
-          )
+          ),
         ],
       ),
     );
@@ -117,19 +143,24 @@ class _NotesListScreenState extends State<NotesListScreen> {
                       children: [
                         user?.avatar != null && user!.avatar!.isNotEmpty
                             ? CircleAvatar(
-                          radius: 40, // to hơn rõ rệt
-                          backgroundImage: NetworkImage('${Common.domain}${user.avatar!}'),
-                        )
+                                radius: 40, // to hơn rõ rệt
+                                backgroundImage: NetworkImage(
+                                  '${Common.domain}${user.avatar!}',
+                                ),
+                              )
                             : CircleAvatar(
-                          radius: 40,
-                          backgroundColor: const Color(0xFF80D8FF),
-                          child: Text(
-                            (user?.fullName.isNotEmpty == true
-                                ? user!.fullName[0].toUpperCase()
-                                : '?'),
-                            style: const TextStyle(fontSize: 28, color: Colors.white),
-                          ),
-                        ),
+                                radius: 40,
+                                backgroundColor: const Color(0xFF80D8FF),
+                                child: Text(
+                                  (user?.fullName.isNotEmpty == true
+                                      ? user!.fullName[0].toUpperCase()
+                                      : '?'),
+                                  style: const TextStyle(
+                                    fontSize: 28,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
                         const SizedBox(width: 16),
                         Expanded(
                           child: Column(
@@ -140,7 +171,9 @@ class _NotesListScreenState extends State<NotesListScreen> {
                                 style: TextStyle(
                                   fontSize: 22,
                                   fontWeight: FontWeight.bold,
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -148,7 +181,9 @@ class _NotesListScreenState extends State<NotesListScreen> {
                                 user?.email ?? 'Chưa có email',
                                 style: TextStyle(
                                   fontSize: 16,
-                                  color: Theme.of(context).colorScheme.onSurface,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -180,16 +215,25 @@ class _NotesListScreenState extends State<NotesListScreen> {
                     value: Provider.of<ThemeProvider>(context).themeMode,
                     onChanged: (ThemeMode? mode) {
                       if (mode != null) {
-                        Provider.of<ThemeProvider>(context, listen: false)
-                            .setTheme(mode);
+                        Provider.of<ThemeProvider>(
+                          context,
+                          listen: false,
+                        ).setTheme(mode);
                       }
                     },
                     items: const [
                       DropdownMenuItem(
-                          value: ThemeMode.light, child: Text("Light")),
-                      DropdownMenuItem(value: ThemeMode.dark, child: Text("Dark")),
+                        value: ThemeMode.light,
+                        child: Text("Light"),
+                      ),
                       DropdownMenuItem(
-                          value: ThemeMode.system, child: Text("System")),
+                        value: ThemeMode.dark,
+                        child: Text("Dark"),
+                      ),
+                      DropdownMenuItem(
+                        value: ThemeMode.system,
+                        child: Text("System"),
+                      ),
                     ],
                   ),
                 ),
@@ -214,11 +258,14 @@ class _NotesListScreenState extends State<NotesListScreen> {
                               Navigator.pop(context); // đóng dialog
                               await AuthService.logout();
                               if (context.mounted) {
-                                Provider.of<UserProvider>(context, listen: false).clearUser();
+                                Provider.of<UserProvider>(
+                                  context,
+                                  listen: false,
+                                ).clearUser();
                                 Navigator.pushNamedAndRemoveUntil(
                                   context,
                                   '/login',
-                                      (route) => false,
+                                  (route) => false,
                                 );
                               }
                             },
@@ -232,9 +279,7 @@ class _NotesListScreenState extends State<NotesListScreen> {
                     );
                   },
                 ),
-
               ],
-
             );
           },
         ),
@@ -245,68 +290,105 @@ class _NotesListScreenState extends State<NotesListScreen> {
         elevation: 0,
         leading: _isSearching
             ? IconButton(
-          icon: Icon(Icons.arrow_back,
-              color: isDark ? Colors.white : Colors.black),
-          onPressed: () {
-            setState(() {
-              _isSearching = false;
-              _searchQuery = '';
-            });
-          },
-        )
+                icon: Icon(
+                  Icons.arrow_back,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _searchQuery = '';
+                  });
+                },
+              )
             : IconButton(
-          icon: Icon(Icons.menu,
-              color: isDark ? Colors.white : Colors.black),
-          onPressed: () => _scaffoldKey.currentState?.openDrawer(),
-        ),
+                icon: Icon(
+                  Icons.menu,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+                onPressed: () => _scaffoldKey.currentState?.openDrawer(),
+              ),
         title: _isSearching
             ? TextField(
-          controller: _searchController,
-          autofocus: true,
-          onChanged: (value) {
-            setState(() {
-              _searchQuery = value;
-            });
-          },
-          decoration: const InputDecoration(
-            hintText: 'Tìm ghi chú...',
-            border: InputBorder.none,
-          ),
-          style: TextStyle(color: isDark ? Colors.white : Colors.black),
-        )
-
+                controller: _searchController,
+                autofocus: true,
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
+                decoration: const InputDecoration(
+                  hintText: 'Tìm ghi chú...',
+                  border: InputBorder.none,
+                ),
+                style: TextStyle(color: isDark ? Colors.white : Colors.black),
+              )
             : Text(
-          'Notes',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.black,
-          ),
-        ),
+                'Notes',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
         actions: [
+          PopupMenuButton<SortOption>(
+            icon: Icon(Icons.sort, color: isDark ? Colors.white : Colors.black),
+            onSelected: (SortOption selected) {
+              setState(() {
+                _sortOption = selected;
+                _applySorting();
+              });
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<SortOption>>[
+              const PopupMenuItem<SortOption>(
+                value: SortOption.titleAsc,
+                child: Text('Tiêu đề A-Z'),
+              ),
+              const PopupMenuItem<SortOption>(
+                value: SortOption.titleDesc,
+                child: Text('Tiêu đề Z-A'),
+              ),
+              const PopupMenuItem<SortOption>(
+                value: SortOption.dateNewest,
+                child: Text('Mới nhất'),
+              ),
+              const PopupMenuItem<SortOption>(
+                value: SortOption.dateOldest,
+                child: Text('Cũ nhất'),
+              ),
+            ],
+          ),
+
           !_isSearching
               ? IconButton(
-            icon: Icon(Icons.search,
-                color: isDark ? Colors.white : Colors.black),
-            onPressed: () {
-              setState(() {
-                _isSearching = true;
-              });
-            },
-          )
+                  icon: Icon(
+                    Icons.search,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _isSearching = true;
+                    });
+                  },
+                )
               : IconButton(
-            icon: Icon(Icons.clear,
-                color: isDark ? Colors.white : Colors.black),
-            onPressed: () {
-              setState(() {
-                _searchQuery = '';
-                _searchController.clear();
-              });
-            },
-          ),
+                  icon: Icon(
+                    Icons.clear,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _searchQuery = '';
+                      _searchController.clear();
+                    });
+                  },
+                ),
           IconButton(
-            icon: Icon(isGridView ? Icons.view_list : Icons.grid_view,
-                color: isDark ? Colors.white : Colors.black),
+            icon: Icon(
+              isGridView ? Icons.view_list : Icons.grid_view,
+              color: isDark ? Colors.white : Colors.black,
+            ),
             onPressed: () {
               setState(() {
                 isGridView = !isGridView;
@@ -321,29 +403,27 @@ class _NotesListScreenState extends State<NotesListScreen> {
           : filteredNotes.isEmpty
           ? const Center(child: Text('Không có ghi chú nào.'))
           : Padding(
-        padding:
-        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: isGridView
-            ? GridView.builder(
-          itemCount: filteredNotes.length,
-          gridDelegate:
-          const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 3 / 4,
-          ),
-          itemBuilder: (_, index) => _buildNoteCard(
-              filteredNotes[index], isDark, true),
-        )
-            : ListView.separated(
-          itemCount: filteredNotes.length,
-          separatorBuilder: (_, __) =>
-          const SizedBox(height: 12),
-          itemBuilder: (_, index) => _buildNoteCard(
-              filteredNotes[index], isDark, false),
-        ),
-      ),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: isGridView
+                  ? GridView.builder(
+                      itemCount: filteredNotes.length,
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            mainAxisSpacing: 12,
+                            crossAxisSpacing: 12,
+                            childAspectRatio: 3 / 4,
+                          ),
+                      itemBuilder: (_, index) =>
+                          _buildNoteCard(filteredNotes[index], isDark, true),
+                    )
+                  : ListView.separated(
+                      itemCount: filteredNotes.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 12),
+                      itemBuilder: (_, index) =>
+                          _buildNoteCard(filteredNotes[index], isDark, false),
+                    ),
+            ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final result = await Navigator.pushNamed(context, '/noteForm');
@@ -358,133 +438,202 @@ class _NotesListScreenState extends State<NotesListScreen> {
   Widget _buildNoteCard(Note note, bool isDark, bool isGrid) {
     final noteColor = Color(note.color);
 
-    final cardContent = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+    final cardContent = Stack(
       children: [
-        Text(
-          note.title,
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.black,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Expanded(
-          child: Text(
-            note.content,
-            maxLines: 5,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: 14,
-              height: 1.3,
-              color: isDark ? Colors.white70 : Colors.black87,
-            ),
-          ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
+        // Nội dung note (title + content + actions)
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            IconButton(
-              onPressed: () async {
-                final result = await Navigator.pushNamed(
-                  context,
-                  '/noteForm',
-                  arguments: note,
-                );
-                if (result == true) _fetchNotes();
-              },
-              icon: Icon(Icons.edit,
-                  size: 20, color: isDark ? Colors.white : Colors.black),
+            const SizedBox(height: 24), // tạo khoảng cách phía dưới nút pin
+            Text(
+              note.title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isDark ? Colors.white : Colors.black,
+              ),
             ),
-            IconButton(
-              onPressed: () => _confirmDelete(context, note.id),
-              icon: Icon(Icons.delete,
-                  size: 20, color: isDark ? Colors.white : Colors.black),
+            const SizedBox(height: 6),
+            Expanded(
+              child: Text(
+                note.content,
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 1.3,
+                  color: isDark ? Colors.white70 : Colors.black87,
+                ),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                IconButton(
+                  onPressed: () async {
+                    final result = await Navigator.pushNamed(
+                      context,
+                      '/noteForm',
+                      arguments: note,
+                    );
+                    if (result == true) _fetchNotes();
+                  },
+                  icon: Icon(
+                    Icons.edit,
+                    size: 20,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => _confirmDelete(context, note.id),
+                  icon: Icon(
+                    Icons.delete,
+                    size: 20,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                ),
+              ],
             ),
           ],
+        ),
+
+        // Nút pin ở góc phải trên
+        Positioned(
+          top: 0,
+          right: 0,
+          child: IconButton(
+            icon: Icon(
+              note.pinned ? Icons.push_pin : Icons.push_pin_outlined,
+              color: isDark ? Colors.white : Colors.black,
+            ),
+            onPressed: () async {
+              await NoteService().togglePin(note.id);
+              _fetchNotes();
+            },
+          ),
         ),
       ],
     );
 
     return isGrid
         ? Material(
-      color: noteColor,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () async {
-          final result = await Navigator.pushNamed(
-            context,
-            '/noteDetail',
-            arguments: note,
-          );
-          if (result == true) _fetchNotes();
-        },
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: cardContent,
-        ),
-      ),
-    )
-        : Container(
-      decoration: BoxDecoration(
-        color: noteColor,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: ListTile(
-        contentPadding:
-        const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        onTap: () async {
-          final result = await Navigator.pushNamed(
-            context,
-            '/noteDetail',
-            arguments: note,
-          );
-          if (result == true) _fetchNotes();
-        },
-        title: Text(
-          note.title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: isDark ? Colors.white : Colors.black,
-          ),
-        ),
-        subtitle: Text(
-          note.content,
-          maxLines: 2,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: isDark ? Colors.white70 : Colors.black87,
-          ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            IconButton(
-              onPressed: () async {
+            color: noteColor,
+            borderRadius: BorderRadius.circular(16),
+            child: InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () async {
                 final result = await Navigator.pushNamed(
                   context,
-                  '/noteForm',
+                  '/noteDetail',
                   arguments: note,
                 );
                 if (result == true) _fetchNotes();
               },
-              icon: Icon(Icons.edit,
-                  size: 20, color: isDark ? Colors.white : Colors.black),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: cardContent,
+              ),
             ),
-            IconButton(
-              onPressed: () => _confirmDelete(context, note.id),
-              icon: Icon(Icons.delete,
-                  size: 20, color: isDark ? Colors.white : Colors.black),
-            ),
-          ],
+          )
+        :InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: () async {
+        final result = await Navigator.pushNamed(
+          context,
+          '/noteDetail',
+          arguments: note,
+        );
+        if (result == true) _fetchNotes();
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: noteColor,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Stack(
+            children: [
+              // Nội dung ghi chú
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 5), // Chừa chỗ cho nút pin
+                  Text(
+                    note.title,
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black,
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    note.content,
+                    maxLines: isGrid ? 5 : 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: isDark ? Colors.white70 : Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      IconButton(
+                        onPressed: () async {
+                          final result = await Navigator.pushNamed(
+                            context,
+                            '/noteForm',
+                            arguments: note,
+                          );
+                          if (result == true) _fetchNotes();
+                        },
+                        icon: Icon(
+                          Icons.edit,
+                          size: 22,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => _confirmDelete(context, note.id),
+                        icon: Icon(
+                          Icons.delete,
+                          size: 22,
+                          color: isDark ? Colors.white : Colors.black,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+
+              // Nút pin ở góc trên bên phải
+              Positioned(
+                top: 0,
+                right: 0,
+                child: IconButton(
+                  icon: Icon(
+                    note.pinned ? Icons.push_pin : Icons.push_pin_outlined,
+                    size: 20,
+                    color: isDark ? Colors.white : Colors.black,
+                  ),
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                  onPressed: () async {
+                    await NoteService().togglePin(note.id);
+                    _fetchNotes();
+                  },
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
+
+
+

@@ -39,6 +39,23 @@ class NoteService {
     }
   }
 
+  Future<void> togglePin(int noteId) async {
+    final token = await AuthService.getToken();
+    final url = Uri.parse('${Common.domain}/api/notes/$noteId/toggle-pin');
+
+    final response = await http.put(
+      url,
+      headers: {
+        'Authorization': 'Bearer $token',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Không thể cập nhật trạng thái pin');
+    }
+  }
+
+
   Future<void> createNote(Map<String, dynamic> note) async {
     final headers = await _getAuthHeaders();
     final response = await http.post(
